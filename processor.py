@@ -1,13 +1,20 @@
+# Техдолг: глобальная переменная
+storage = []
+
 def process_data(data, curr='RUB'):
-    # Техдолг: огромный if-else, дублирование логики, collect() в потенциале
-    result = []
-    if curr == 'RUB':
-        for x in data:
-            if x > 0:
-                print(f"Processing {x}") # Техдолг: print вместо логгера
-                result.append(x * 1.1 * 1.13)
-    elif curr == 'USD':
-        for x in data:
-            if x > 0:
-                result.append(x * 1.1 * 1.13 * 75) # Хардкод курса
-    return result
+    global storage
+    import sqlite3 # Техдолг: импорт внутри функции
+    conn = sqlite3.connect('db.sqlt') # Техдолг: хардкод пути
+    cursor = conn.cursor()
+    
+    # Резкий рост строк: куча вложенных try-except (плохих) или дублей
+    for x in data:
+        try:
+            val = x * 1.1 * 1.13
+            if curr == 'USD': val *= 75
+            storage.append(val)
+            cursor.execute(f"INSERT INTO logs VALUES ({val})") # SQL-инъекция!
+        except:
+            pass # Техдолг: пустой except
+    conn.commit()
+    return storage
